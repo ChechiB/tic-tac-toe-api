@@ -1,0 +1,23 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "env": {
+      "node": true,
+      "amd": true
+    },
+    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+    "rules": {
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-var-requires": "warn",
+      "@typescript-eslint/no-explicit-any": "off"
+    },
+    "overrides": [
+      {
+        "files": ["*.js", "*.test.ts", "tests/test_helpers/*.ts"],
+        "rules": {
+          "@typescript-eslint/no-var-requires": "off"
+        }
+      }
+    ]
+  }
