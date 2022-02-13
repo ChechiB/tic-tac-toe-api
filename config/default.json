@@ -1,0 +1,20 @@
+{
+    "version": "v1",
+    "port": 8088,
+
+    "db": {
+        "dbName": "tictactoe",
+        "connString": "mongodb://localhost:27017",
+        "debug": true,
+        "options": {
+            "user": "",
+            "pass": "",
+            "poolSize": 5,
+            "keepAlive": 100,
+            "connectTimeoutMS": 5000,
+            "autoIndex": true,
+            "bufferCommands": false,
+            "useNewUrlParser": true
+        }
+    }
+}
