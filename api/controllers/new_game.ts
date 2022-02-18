@@ -1,30 +1,29 @@
-import { IControllerDependencies } from "../commons/interfaces/controllers/controller_deps";
-import { CommonResponse, StatusType } from "../commons/interfaces/generic_response";
+import { IControllerDependencies } from "api/commons/interfaces/controllers/controller_deps";
 import { IGameRepository } from "../commons/interfaces/repositories/game";
+import { IPlayerRepository } from "../commons/interfaces/repositories/player";
 import { IGameService } from "../commons/interfaces/services/game";
-import { IBoardResponse } from '../commons/interfaces/board';
+import { IPlayerService } from "../commons/interfaces/services/player";
+
 interface GameServiceDeps {
     gameService: IGameService,
+    playerService: IPlayerService
 }
 
 interface GameRepositoryDeps{
     gameRepository: IGameRepository,
+    playerRepository: IPlayerRepository
 }
 
 export type GameControllerDependencies = IControllerDependencies<GameServiceDeps,GameRepositoryDeps>
 
-export const initGameController= (deps: GameControllerDependencies) => {
+export const createGameController= (deps: GameControllerDependencies) => {
     return async function handler(req, res, next) {
         try {
             const { services: { gameService }, repositories: { gameRepository }} = deps;
             const {player_name} = req.body;
-            //armar el reponse que corresponda
-            const game = await gameService.create({gameRepository},player_name);
-            const response = new CommonResponse<IBoardResponse>({
-                status: StatusType.SUCCESS,
-                data: game
-            })
-            res.status(200).json(response);
+            // TODO deleted gameService from gameService INterface
+            const response = await gameService.create({gameRepository},player_name);
+            return res.send(response);
         } catch (error) {
             next(error)
         }

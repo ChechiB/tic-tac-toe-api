@@ -1,7 +1,4 @@
-//create game
-//update game
-// get hash
-import { IGameRepository } from 'api/commons/interfaces/repositories/game';
+import { IGameRepository } from '../commons/interfaces/repositories/game';
 import Game from '../models/game';
 
 export const gameRepository: IGameRepository = {
@@ -13,6 +10,53 @@ export const gameRepository: IGameRepository = {
         }
     
         const game = new Game(body);
-        return game.save();
+        const bla= game.save();
+        const test  = {
+            id: "string",
+            hash: "string",
+            status: true,
+            board: ["hola"],
+            players: {
+                playerOneId: "string",
+                playerTwoId: "string",
+                nextPlayer: "string",
+            }
+        }
+        return test;
+    },
+
+    async update(hash,data){
+        const bla = Game.findOneAndUpdate({hash},data,
+            {
+            useFindAndModify: false,
+            'new': true,
+            upsert: true
+        });
+        return {
+            id: "string",
+            hash: "string",
+            status: true,
+            board: [],
+            players: {
+                playerOneId: "string",
+                playerTwoId: "string",
+                nextPlayer: "string",
+            }
+        }
+    },
+
+    async get(hash){
+        const bla = Game.findOne({hash});
+        return {
+            id: "string",
+            hash: "string",
+            status: true,
+            board: [],
+            players: {
+                playerOneId: "string",
+                playerTwoId: "string",
+                nextPlayer: "string",
+            }
+        }
     }
 }

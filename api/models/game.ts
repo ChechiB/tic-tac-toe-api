@@ -5,10 +5,13 @@ const Schema = mongoose.Schema;
 
 const gameSchema = new Schema({
     hash: { type: String, required: true },
-    status: { type: String, required: true },
-    nextPlayer: { type: String, required: false },
-    createdAt: { type: Date, 'default': Date.now },
-    modifiedAt: { type: Date, 'default': Date.now },
+    status: { type: String, required: false },
+    players: {
+        playerOneId: { type: Schema.Types.ObjectId,  required: false },
+        playerTwoId: { type: Schema.Types.ObjectId, required: false },
+        nextPlayer: { type: String, required: false },
+    },
+    board: { type: [String], required: true }
 });
 
 gameSchema.index({ 'hash': 1 }, { unique: true });

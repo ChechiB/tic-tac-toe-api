@@ -1,7 +1,7 @@
-import { IControllerDependencies } from "../commons/interfaces/controllers/controller_deps";
+import { IPlayerService } from "../commons/interfaces/services/player";
 import { CommonResponse, StatusType } from "../commons/interfaces/generic_response";
 import { IPlayerRepository, IPlayerResponse } from "../commons/interfaces/repositories/player";
-import { IPlayerService } from "../commons/interfaces/services/player";
+import { IControllerDependencies } from "../commons/interfaces/controllers/controller_deps";
 
 // DI
 interface PlayerServiceDeps {
@@ -14,12 +14,12 @@ interface PlayerRepositoryDeps{
 
 export type PlayerControllerDependencies = IControllerDependencies<PlayerServiceDeps,PlayerRepositoryDeps>
 
-export const createPlayerController= (deps: PlayerControllerDependencies) => {
+export const setSymbolPlayerController= (deps: PlayerControllerDependencies) => {
     return async function handler(req, res, next) {
         try {
             const { services: { playerService }, repositories: { playerRepository }} = deps;
-            const {playerName} = req.body;            
-            const player = await playerService.create({playerRepository},playerName);
+            const { players } = req.body;            
+            const player = await playerService.setSymbol({playerRepository},players);
             const response = new CommonResponse<IPlayerResponse>({
                 status: StatusType.SUCCESS,
                 data: player
