@@ -17,7 +17,6 @@ export const checkSymbolPlayerMiddleware = (deps: IMiddlewareCheckSymbolPlayer) 
 
             const playerOne = await playerRepository.get(p1);
             const playerTwo = await playerRepository.get(p2);
-            console.log("MIDDLEWARE",playerOne, playerTwo);
             
             if ( playerOne.symbol || playerTwo.symbol ){
                 return next(new CustomError(400, "Symbols already set"));

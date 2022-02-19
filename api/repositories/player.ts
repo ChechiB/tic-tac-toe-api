@@ -2,7 +2,7 @@ import { IPlayerRepository } from '../commons/interfaces/repositories/player';
 import Player from '../models/player';
 export const playerRepository: IPlayerRepository = {
     async create(playerName: string){
-        const player = new Player({name: playerName}, {returnNewDocument: true});
+        const player = new Player({name: playerName});
         return player.save();
     },
 

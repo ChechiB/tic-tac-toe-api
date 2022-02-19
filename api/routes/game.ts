@@ -5,6 +5,8 @@ import { initGameController } from '../controllers/init_game';
 import { playerService } from "../services/player";
 import { playerRepository } from "../repositories/player";
 import { createGameController, GameControllerDependencies } from "../controllers/new_game";
+import { joinGameController } from '../controllers/join_game';
+import { getGameController } from '../controllers/get_game';
 
 const router = Router();
 // use type not interface
@@ -43,15 +45,15 @@ router.post(
 );
 
 // init game
-router.post(
+router.put(
     "/init",
     initGameController(dependencies)
 );
 
 // Join to a game
-router.post("/join/:hash");
+router.put("/join/:hash",joinGameController(dependencies));
 
 // Get game status
-router.get("/status/:hash");
+router.get("/status/:hash", getGameController(dependencies));
 
 export default router;

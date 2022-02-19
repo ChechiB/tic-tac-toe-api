@@ -1,9 +1,8 @@
 import { GameControllerDependencies } from '../../../controllers/init_game';
-export interface IGameResponse {
-    hash: string
-}
+import { IPlayerResponse } from '../repositories/player';
+import { IGameResponse } from '../repositories/game';
 export interface IGameService{
-    create( deps: GameControllerDependencies["repositories"], playerName: string): Promise<IGameResponse>; 
+    create( deps: GameControllerDependencies["repositories"], player: IPlayerResponse): Promise<IGameResponse>; 
     init( deps: GameControllerDependencies["repositories"], hash: string, playerId: string): Promise<any>;
     join( deps: GameControllerDependencies["repositories"], hash: string, playerId:string): Promise<any>;
     updateBoard(deps: GameControllerDependencies["repositories"], hash: string, cellPosition: string, playerId: string, playerSymbol: string): Promise<any>

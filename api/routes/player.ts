@@ -39,8 +39,9 @@ function setDependencies(): GameControllerDependencies {
 
 const dependencies = setDependencies();
 
+// update symbols
 router.put(
-    "/",
+    "/symbol",
     checkSymbolPlayerMiddleware(dependencies),
     setSymbolPlayerController(dependencies)
 );

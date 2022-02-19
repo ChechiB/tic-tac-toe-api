@@ -1,7 +1,8 @@
-import { IControllerDependencies } from "api/commons/interfaces/controllers/controller_deps";
-import { IGameRepository } from "../commons/interfaces/repositories/game";
+import { IControllerDependencies } from "../commons/interfaces/controllers/controller_deps";
+import { CommonResponse, StatusType } from "../commons/interfaces/generic_response";
+import { IGameRepository, IGameResponse } from "../commons/interfaces/repositories/game";
 import { IPlayerRepository } from "../commons/interfaces/repositories/player";
-import { IGameService } from "../commons/interfaces/services/game";
+import { IGameService } from '../commons/interfaces/services/game';
 import { IPlayerService } from "../commons/interfaces/services/player";
 
 interface GameServiceDeps {
@@ -9,20 +10,25 @@ interface GameServiceDeps {
     playerService: IPlayerService
 }
 
-interface GameRepositoryDeps{
+interface GameRepositoryDeps {
     gameRepository: IGameRepository,
     playerRepository: IPlayerRepository
 }
 
-export type GameControllerDependencies = IControllerDependencies<GameServiceDeps,GameRepositoryDeps>
+export type GameControllerDependencies = IControllerDependencies<GameServiceDeps, GameRepositoryDeps>
 
-export const createGameController= (deps: GameControllerDependencies) => {
+export const createGameController = (deps: GameControllerDependencies) => {
     return async function handler(req, res, next) {
         try {
-            const { services: { gameService }, repositories: { gameRepository }} = deps;
-            const {player_name} = req.body;
-            // TODO deleted gameService from gameService INterface
-            const response = await gameService.create({gameRepository},player_name);
+            const { services: { gameService }, repositories: { gameRepository } } = deps;
+            console.log(req.body);
+
+            const player= req.body;
+            const game = await gameService.create({ gameRepository }, player);
+            const response = new CommonResponse<IGameResponse>({
+                status: StatusType.SUCCESS,
+                data: game
+            }) 
             return res.send(response);
         } catch (error) {
             next(error)

@@ -1,7 +1,8 @@
 import { generateHash } from '../commons/utils/hash';
-import { IGameResponse, IGameService } from '../commons/interfaces/services/game';
+import { IGameService } from '../commons/interfaces/services/game';
 import { IBoard } from '../commons/interfaces/board';
 import CustomError from '../commons/custom_error';
+import { IGameResponse } from 'api/commons/interfaces/repositories/game';
 
 const statusAllowed = {
     TIE: "tie",
@@ -10,29 +11,41 @@ const statusAllowed = {
 };
 
 export const gameService: IGameService = {
-    async create( deps, playerName): Promise<IGameResponse>{
+    async create( deps, player): Promise<IGameResponse>{
         const { gameRepository }= deps;
-        const hash = generateHash(playerName);                
-        const game = await gameRepository.create(hash);
-        // ver si es necesario devolver el playerID
-        return {
-            hash: game.hash,
+        const hash = generateHash(player.playerName);          
+        console.log("PLAYER BACK", player)
+        const board = initBoard();
+        
+        const data = {
+            hash,
+            board,
+            players: {
+                playerOneId: player.id,
+                playerTwoId: null,
+                nextPlayer: null,
+            },
+            status: false
         };
+        console.log("To create", data);
+        
+        const game = await gameRepository.create(data);
+        return game;
     },
 
-    // el front va a crear el player
-    // en un middleware validar si el player existe
-    // en otro lado validar cuando se une un user si ya existe primero, dps validar aca si ya hay 2 jugadores unidos a la partida
+    // Si el juego no existe -> error
     async init(deps, hash, playerId) {
         const { gameRepository } = deps;
 
         const board = initBoard();
+        
         const data = {
             board,
             players: {
                 playerOneId: playerId
             }
         };
+        
         const response = await gameRepository.update(hash,data);
 
         return response;
@@ -40,66 +53,77 @@ export const gameService: IGameService = {
 
     // actualizar el satus si algun jugador cierra la pestaña -> se cancela el juego
     // validar si el hash existe y validar estado del juego en middleware
-    // podria traer el jeugo en un middleware y propagar
     async join(deps, hash, playerId){
         const { gameRepository } = deps;
         const { players } = await gameRepository.get(hash);
+
+        if(!players){
+            throw new CustomError(400, "Two players already");
+        }
+
         const nextPlayer = getNextPlayer(players, players.nextPlayer);
         const data = {
             players: {
                 playerTwoId: playerId,
                 nextPlayer
-            },
-
+            }
         };
         const response = await gameRepository.update(hash, data);
         return response;
     },
 
-    // checkear casilla
+    // check cell
     async updateBoard(deps, hash, cellPosition, playerSymbol, playerId){
         const { gameRepository } = deps;
         const { board, players } = await gameRepository.get(hash);
 
-        if(board[`cell${cellPosition}`] !==""){
-            //mejorar
+        const boardResponse = {...board};
+        const playersResponse = {...players};
+
+        if(boardResponse[`cell${cellPosition}`] !==""){
             throw new CustomError(400, "Cell already occupied");
         }
 
-        board[`cell${cellPosition}`] = playerSymbol;
-        const nextPlayer = getNextPlayer(players, playerId);
-
-
-        const resp = await gameRepository.update(hash, board);
-        return {};        
+        boardResponse[`cell${cellPosition}`] = playerSymbol;
+        const nextPlayer = getNextPlayer(playersResponse, playerId);
+        playersResponse.nextPlayer = nextPlayer;
+        return await gameRepository.update(hash, {board, players: playersResponse});        
     },
     
-    async getBoardStatus(deps, hash){
+    // cambiar nombre por gameStatus
+    async getBoardStatus(deps, hash){    
         const { gameRepository } = deps;
-        const { board } = await gameRepository.get(hash);
-        const statusType = checkWinner(formatCells(board)); 
+        const response = await gameRepository.get(hash);
+        
+        const isGameInit = response?.board;
+
+        if (!isGameInit){
+            return response;
+        }
+
+        const statusType = checkWinner(formatCells(response.board)); 
         const status = statusType !== statusAllowed.PLAYING ? false : true ;
 
         //set status
-        await gameRepository.update(hash, status);
+        const game = await gameRepository.update(hash, {status});
         return {
-            statusType: "slada"
+            game,
+            statusType
         }
     }
 }
 
-//modificar
 const initBoard = (): IBoard=> {
     return {
-        cell0: "",
-        cell1: "",
-        cell2: "",
-        cell3: "",
-        cell4: "",
-        cell5: "",
-        cell6: "",
-        cell7: "",
-        cell8: ""
+        cell0: null,
+        cell1: null,
+        cell2: null,
+        cell3: null,
+        cell4: null,
+        cell5: null,
+        cell6: null,
+        cell7: null,
+        cell8: null
     }
 }
 
@@ -113,7 +137,7 @@ const formatCells = (board) => {
 }
 
 const getNextPlayer = (players,actualPlayer): string => {
-    if ( actualPlayer === ""){ // ver si mongo puede guardar null
+    if (!actualPlayer){ //validate
        const nextPlayer = Math.random() <0.5 ? players.playerOne.id : players.playerTwo.id;
         return nextPlayer;
     }

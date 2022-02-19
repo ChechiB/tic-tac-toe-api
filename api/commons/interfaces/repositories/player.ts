@@ -1,6 +1,7 @@
 export interface IPlayerResponse{
     id: string,
-    symbol: string
+    symbol: string,
+    playerName: string
 }
 
 export interface IPlayerRepository{

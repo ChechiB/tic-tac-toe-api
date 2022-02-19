@@ -12,9 +12,14 @@ export interface IMiddlewareCheckCurrentPlayer{
 export const checkCurrentPlayerMiddleware = (deps: IMiddlewareCheckCurrentPlayer) => {
         return async function checkCurrentPlayer(req, res, next) {
             const { repositories: { playerRepository, gameRepository}} = deps;
-            const hash = "bla";
-            const playerId = "";
+            const hash = res.params;
+            const playerId = res.body;
             const { players } = await gameRepository.get(hash);
+
+            // game without players
+            if (!players.playerOneId && !players.playerTwoId){
+                return next();
+            }
             const isCurrentPlayer = Object.values(players).find(e => e === playerId); // players.playerOneId === playerId || players.playerTwoId === playerId 
     
             if (!isCurrentPlayer) {
