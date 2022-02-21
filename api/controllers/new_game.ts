@@ -21,8 +21,6 @@ export const createGameController = (deps: GameControllerDependencies) => {
     return async function handler(req, res, next) {
         try {
             const { services: { gameService }, repositories: { gameRepository } } = deps;
-            console.log(req.body);
-
             const player= req.body;
             const game = await gameService.create({ gameRepository }, player);
             const response = new CommonResponse<IGameResponse>({

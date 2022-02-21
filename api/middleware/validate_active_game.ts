@@ -11,13 +11,13 @@ export const checkGameStatusMiddleware = (deps: IMiddlewareCheckGameStatus) =>
     {
         return async function checkGameStatus(req, res, next){
                 const { repositories: { gameRepository } } = deps;
-                const hash = "bla"; //ver donde va a venir
-                const { status } = await gameRepository.get(hash); 
+                const {hash} = req.params; 
+                const game = await gameRepository.get(hash); 
 
-                if (status) {
+                if (game) {
                     return next();
                 }
-                return next(new CustomError(400, "Player not allowed"))
+                return next(new CustomError(400, "Nonexistent Game", "C05"))
         
     }
 }

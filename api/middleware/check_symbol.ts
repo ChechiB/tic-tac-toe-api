@@ -11,15 +11,15 @@ export const checkSymbolPlayerMiddleware = (deps: IMiddlewareCheckSymbolPlayer) 
         return async function checkCurrentSymbolPlayer(req, res, next) {
             const { repositories: { playerRepository }} = deps;
             const { players: {
-                p1,
-                p2
+                playerOneId,
+                playerTwoId
             } } = req.body;
-
-            const playerOne = await playerRepository.get(p1);
-            const playerTwo = await playerRepository.get(p2);
             
-            if ( playerOne.symbol || playerTwo.symbol ){
-                return next(new CustomError(400, "Symbols already set"));
+            const playerOne = await playerRepository.get(playerOneId);
+            const playerTwo = await playerRepository.get(playerTwoId);
+            
+            if ( playerOne?.symbol || playerTwo?.symbol ){
+                return next(new CustomError(400, "Symbols already set", "CE04"));
             }
     
             return next();

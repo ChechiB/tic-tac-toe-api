@@ -6,8 +6,10 @@ export const playerRepository: IPlayerRepository = {
         return player.save();
     },
 
-    async updateById(playerId, data){        
-        return Player.findOneAndUpdate({_id: playerId}, data, {returnNewDocument: true});
+    async updateById(playerId, data){                
+        return Player.findOneAndUpdate({_id: playerId}, { $set: { 
+            ...data
+          }}, {returnDocument: 'after'});
     },
 
     async get(id){

@@ -3,6 +3,7 @@ import { IGameService } from '../commons/interfaces/services/game';
 import { IBoard } from '../commons/interfaces/board';
 import CustomError from '../commons/custom_error';
 import { IGameResponse } from 'api/commons/interfaces/repositories/game';
+import { ObjectId } from 'mongodb';
 
 const statusAllowed = {
     TIE: "tie",
@@ -14,21 +15,18 @@ export const gameService: IGameService = {
     async create( deps, player): Promise<IGameResponse>{
         const { gameRepository }= deps;
         const hash = generateHash(player.playerName);          
-        console.log("PLAYER BACK", player)
         const board = initBoard();
         
         const data = {
             hash,
             board,
             players: {
-                playerOneId: player.id,
+                playerOneId: player.id.toString(),
                 playerTwoId: null,
                 nextPlayer: null,
             },
             status: false
-        };
-        console.log("To create", data);
-        
+        };        
         const game = await gameRepository.create(data);
         return game;
     },
@@ -51,43 +49,75 @@ export const gameService: IGameService = {
         return response;
     },
 
-    // actualizar el satus si algun jugador cierra la pestaña -> se cancela el juego
-    // validar si el hash existe y validar estado del juego en middleware
     async join(deps, hash, playerId){
         const { gameRepository } = deps;
         const { players } = await gameRepository.get(hash);
 
-        if(!players){
-            throw new CustomError(400, "Two players already");
+        if(players.playerTwoId){
+            throw new CustomError(400, "Two players already", "C06");
+        }
+        const playersIds = {
+            playerOneId: players.playerOneId.toString(),
+            playerTwoId: playerId
         }
 
-        const nextPlayer = getNextPlayer(players, players.nextPlayer);
+        const nextPlayer = getNextPlayer(playersIds, players.nextPlayer);
         const data = {
             players: {
-                playerTwoId: playerId,
+                ...playersIds,
                 nextPlayer
             }
         };
-        const response = await gameRepository.update(hash, data);
-        return response;
+        
+        const game = await gameRepository.update(hash, data);
+        
+        return {
+            players: game.players,
+            id: game.id,
+            hash: game.hash,
+            status: game.status,
+            board: game.board,
+        };
     },
 
-    // check cell
-    async updateBoard(deps, hash, cellPosition, playerSymbol, playerId){
+    // update cell
+    async updateBoard(deps, hash, cellPosition, playerId,playerSymbol){        
         const { gameRepository } = deps;
         const { board, players } = await gameRepository.get(hash);
+        
+        const boardResponse = {
+                cell0: board.cell0,
+                cell1: board.cell1,
+                cell2: board.cell2,
+                cell3: board.cell3,
+                cell4: board.cell4,
+                cell5: board.cell5,
+                cell6: board.cell6,
+                cell7: board.cell7,
+                cell8: board.cell8
+        };
+        const playersResponse = {
+            playerOneId: players.playerOneId.toString(),
+            playerTwoId: players.playerTwoId.toString(),
+            nextPlayer:players.nextPlayer
+        };
 
-        const boardResponse = {...board};
-        const playersResponse = {...players};
-
-        if(boardResponse[`cell${cellPosition}`] !==""){
-            throw new CustomError(400, "Cell already occupied");
+        if(boardResponse[`cell${cellPosition}`] !== null){
+            throw new CustomError(400, "Cell already occupied", "C05");
         }
 
         boardResponse[`cell${cellPosition}`] = playerSymbol;
-        const nextPlayer = getNextPlayer(playersResponse, playerId);
+        const nextPlayer = getNextPlayer(playersResponse, playerId);        
         playersResponse.nextPlayer = nextPlayer;
-        return await gameRepository.update(hash, {board, players: playersResponse});        
+        const game =  await gameRepository.update(hash, {board: boardResponse, players: playersResponse});        
+        
+        return {
+            players: game.players,
+            id: game.id,
+            hash: game.hash,
+            status: game.status,
+            board: game.board,
+        }
     },
     
     // cambiar nombre por gameStatus
@@ -95,19 +125,33 @@ export const gameService: IGameService = {
         const { gameRepository } = deps;
         const response = await gameRepository.get(hash);
         
-        const isGameInit = response?.board;
-
-        if (!isGameInit){
-            return response;
+        if (!response.board){
+            return response; // throw error 
         }
 
-        const statusType = checkWinner(formatCells(response.board)); 
+        const boardResponse = {
+            cell0: response.board.cell0,
+            cell1: response.board.cell1,
+            cell2: response.board.cell2,
+            cell3: response.board.cell3,
+            cell4: response.board.cell4,
+            cell5: response.board.cell5,
+            cell6: response.board.cell6,
+            cell7: response.board.cell7,
+            cell8: response.board.cell8
+        };
+
+        const statusType = checkWinner(formatCells(boardResponse)); 
         const status = statusType !== statusAllowed.PLAYING ? false : true ;
 
         //set status
         const game = await gameRepository.update(hash, {status});
         return {
-            game,
+            players: game.players,
+            id: game.id,
+            hash: game.hash,
+            status: game.status,
+            board: game.board,
             statusType
         }
     }
@@ -130,39 +174,40 @@ const initBoard = (): IBoard=> {
 const formatCells = (board) => {
     const size = 3; 
     const cells = [];
-    for (let i=0; i<board.length; i=i+size) {
-        cells.push(board.slice(i,i+size));
+    const boardArray = Object.values(board);
+    for (let i=0; i<boardArray.length; i=i+size) {
+        const test = boardArray.slice(i,i+size);        
+        cells.push(test);
     }
     return cells;
 }
 
-const getNextPlayer = (players,actualPlayer): string => {
-    if (!actualPlayer){ //validate
-       const nextPlayer = Math.random() <0.5 ? players.playerOne.id : players.playerTwo.id;
+const getNextPlayer = (players,actualPlayer): string => {    
+    if (!actualPlayer){
+       const nextPlayer = Math.random() <0.5 ? players.playerOneId : players.playerTwoId;
         return nextPlayer;
     }
 
-    const nextPlayer = actualPlayer === players.playerOne.id ? players.playerTwo.id: players.playerOne.id
+    const nextPlayer = actualPlayer === players.playerOneId ? players.playerTwoId: players.playerOneId
     return nextPlayer;
 }
 
 const checkWinner = (cells): string =>{
-    const verticalLines = determineVerticalLines(cells);
+    const verticalLines = determineVerticalLines(cells);    
     const crossLines = determineCrooslines(cells);
-    
     //To check tie
-    const emptyMatrix = containsEmptyCell(cells);
+    const emptyCells = containsEmptyCell(cells);
     
+    // horizontal - vertical- cross
     const coincidences= checkCoincidence(cells)||checkCoincidence(verticalLines)||checkCoincidence(crossLines);
 
-    if (!coincidences && !emptyMatrix ) {
+    if (!coincidences && !emptyCells ) {
         return statusAllowed.TIE;
     }
 
-    if(coincidences === true){
+    if(coincidences === true){        
         return statusAllowed.WINNER;
     }
-    
     return statusAllowed.PLAYING;
 }
 
@@ -177,7 +222,7 @@ const checkCoincidence = (cells): boolean =>{
 }
 
 const checkHorizontalLine = (horizontalLine): boolean =>{   
-    if(horizontalLine[0] == ""){
+    if(horizontalLine[0] === null){
         return false;
     } 
 
@@ -189,10 +234,10 @@ const checkHorizontalLine = (horizontalLine): boolean =>{
     return true;
 }
 
-const containsEmptyCell = (cells): boolean =>{
+const containsEmptyCell = (cells): boolean =>{    
     for (let i = 0; i < cells.length; i++) {
         for (let j = 0; j < cells[i].length; j++) {
-            if(cells[i][j] ===""){
+            if(!cells[i][j]){
                 return true;
             }            
         }        

@@ -16,16 +16,13 @@ export type GameControllerDependencies = IControllerDependencies<GameServiceDeps
 export const getGameController= (deps: GameControllerDependencies) => {
     return async function handler(req, res, next) {
         try {
-            const { services: { gameService }, repositories: { gameRepository }} = deps;
-            console.log(res);
-            
+            const { services: { gameService }, repositories: { gameRepository }} = deps;            
             const { hash } = req.params;
-            //armar el reponse que corresponda
-            const game = await gameService.getBoardStatus({gameRepository},hash);
+            const game = await gameService.getBoardStatus({gameRepository},hash);            
             const response = new CommonResponse<IBoardResponse>({
                 status: StatusType.SUCCESS,
                 data: game
-            })
+            })            
             res.status(200).json(response);
         } catch (error) {
             next(error)

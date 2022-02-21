@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { gameService } from '../services/game';
 import { gameRepository } from '../repositories/game';
-import { initGameController } from '../controllers/init_game';
 import { playerService } from "../services/player";
 import { playerRepository } from "../repositories/player";
 import { createGameController, GameControllerDependencies } from "../controllers/new_game";
 import { joinGameController } from '../controllers/join_game';
 import { getGameController } from '../controllers/get_game';
+import { updateGameController } from "../controllers/update_game";
+import { checkCurrentPlayerMiddleware } from "../middleware/check_current_player";
+import { checkGameStatusMiddleware } from "../middleware/validate_active_game";
 
 const router = Router();
 // use type not interface
@@ -45,15 +47,17 @@ router.post(
 );
 
 // init game
-router.put(
+/* router.put(
     "/init",
     initGameController(dependencies)
-);
+); */
 
 // Join to a game
-router.put("/join/:hash",joinGameController(dependencies));
+router.put("/join/:hash",checkGameStatusMiddleware(dependencies),joinGameController(dependencies));
 
 // Get game status
-router.get("/status/:hash", getGameController(dependencies));
+router.get("/status/:hash", checkGameStatusMiddleware(dependencies),getGameController(dependencies));
+// update game
+router.put("/:hash", checkGameStatusMiddleware(dependencies), checkCurrentPlayerMiddleware(dependencies),updateGameController(dependencies));
 
 export default router;

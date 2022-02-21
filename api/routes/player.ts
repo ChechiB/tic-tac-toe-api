@@ -7,6 +7,7 @@ import { GameControllerDependencies } from "../controllers/new_game";
 import { createPlayerController } from "../controllers/create_player";
 import { setSymbolPlayerController } from "../controllers/put_symbol_players";
 import { checkSymbolPlayerMiddleware } from "../middleware/check_symbol";
+import { getPlayerController } from '../controllers/get_player';
 
 const router = Router();
 
@@ -49,6 +50,12 @@ router.put(
 router.post(
     "/new",
     createPlayerController(dependencies)
+);
+
+router
+.get(
+    "/:id",
+    getPlayerController(dependencies)
 );
 
 export default router;
